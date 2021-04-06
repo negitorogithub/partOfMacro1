@@ -6,7 +6,8 @@ import pyperclip
 
 
 def main():
-    absolute_root_file_path = sys.argv[1]
+    # absolute_root_file_path = sys.argv[1]
+    absolute_root_file_path = input('親ファイルの絶対パスを入力してください')
 
     absolute_root_folder_path = os.path.dirname(absolute_root_file_path)
     all_file_absolute_path_list = glob.glob(absolute_root_folder_path + '/*.dart')
@@ -15,18 +16,32 @@ def main():
     for file_path in all_file_absolute_path_list:
         if file_path == absolute_root_file_path:
             continue
-        if add_partof(open(file_path, mode='r+'), absolute_root_file_path):
-            text_2_copy.join('part \'' + os.path.basename(file_path) + '\';\\r')
+        if add_partof(file_path, absolute_root_file_path):
+            print('part \'' + os.path.basename(file_path) + '\';')
+            text_2_copy.join('part \'' + os.path.basename(file_path) + '\';\\n')
     pyperclip.copy(text_2_copy)
 
 
-def add_partof(stream: TextIO, absolute_root_file_path):
-    first_line = stream.readline()
+def add_partof(file_path, absolute_root_file_path):
+    with open(file_path, mode='r+') as stream:
+        lines = stream.readlines()
 
     # すでに追加されている
-    if first_line.startswith('part of'):
+    if lines[0].startswith('part of'):
         return False
-    stream.write('part of \'' + os.path.basename(absolute_root_file_path) + '\';')
+
+    lines.insert(0, 'part of \'' + os.path.basename(absolute_root_file_path) + '\';' +
+                 '''
+''')
+    print(lines[0])
+    print(lines[1])
+    for line in lines:
+        if line.startswith('import '):
+            print(line)
+    lines = [line for line in lines if not line.startswith('import ')]
+
+    with open(file_path, mode='w')as f:
+        f.writelines(lines)
     return True
 
 
